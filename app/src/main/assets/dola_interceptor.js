@@ -12,13 +12,16 @@
   const videoButtons = new WeakMap();
 
   function clean(value) {
-    return String(value || '').replace(/\\u0026/g, '&').replace(/\\\//g, '/').replace(/\\\"/g, '"');
+    return String(value || '')
+      .replace(/\\u0026/g, '&')
+      .replace(/\\\//g, '/')
+      .replace(/\\\"/g, '"');
   }
 
   function readNear(text, index, key) {
     const part = text.slice(Math.max(0, index - 2600), Math.min(text.length, index + 2600));
     const escaped = key.replace(/[.*+?^$()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp('"' + escaped + '"\\\\s*:\\\\s*"((?:\\\\\\\\.|[^"\\\\\\\\])*)"', 'i');
+    const pattern = new RegExp('"' + escaped + '"\\s*:\\s*"([^"]*)"', 'i');
     const match = part.match(pattern);
     return match ? clean(match[1]) : '';
   }
@@ -26,8 +29,8 @@
   function scanFallbacks(text) {
     if (!text || !text.includes('fallback_api') || !window.DolaAndroid) return;
     const patterns = [
-      /"fallback_api"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"/g,
-      /fallback_api\\\\":\\\\"(.*?)\\\\"/g
+      /"fallback_api"\s*:\s*"([^"]+)"/g,
+      /fallback_api\\":\\"(.*?)\\"/g
     ];
     for (const pattern of patterns) {
       let match;
@@ -37,9 +40,13 @@
         seenFallbacks.add(fallbackUrl);
         const metadata = {
           fallbackUrl,
-          prompt: readNear(text, match.index, 'prompt') || readNear(text, match.index, 'query') || readNear(text, match.index, 'content'),
-          poster: readNear(text, match.index, 'poster_url') || readNear(text, match.index, 'poster'),
-          vid: readNear(text, match.index, 'vid') || readNear(text, match.index, 'video_id'),
+          prompt: readNear(text, match.index, 'prompt') ||
+                  readNear(text, match.index, 'query') ||
+                  readNear(text, match.index, 'content'),
+          poster: readNear(text, match.index, 'poster_url') ||
+                  readNear(text, match.index, 'poster'),
+          vid: readNear(text, match.index, 'vid') ||
+               readNear(text, match.index, 'video_id'),
           keySeed: readNear(text, match.index, 'key_seed'),
           messageId: readNear(text, match.index, 'message_id')
         };
@@ -54,7 +61,7 @@
   }
 
   function observeResponse(response, requestUrl) {
-    if (!/chat\\/completion|im\\/chain\\/single|dola\\.com|doubao\\.com/i.test(requestUrl)) return;
+    if (!/chat\/completion|im\/chain\/single|dola\.com|doubao\.com/i.test(requestUrl)) return;
     try {
       const clone = response.clone();
       if (clone.body && clone.body.getReader) {
@@ -95,7 +102,9 @@
   XMLHttpRequest.prototype.send = function (...args) {
     this.addEventListener('load', function () {
       try {
-        if (this.__dolaDownUrl && typeof this.responseText === 'string') scanFallbacks(this.responseText);
+        if (this.__dolaDownUrl && typeof this.responseText === 'string') {
+          scanFallbacks(this.responseText);
+        }
       } catch (_) {}
     });
     return originalXhrSend.apply(this, args);
@@ -105,7 +114,7 @@
     if (!value) return '';
     try {
       const path = new URL(value, location.href).pathname;
-      const match = path.match(/tos-[a-zA-Z0-9_-]+\\/([a-zA-Z0-9_-]+)/i);
+      const match = path.match(/tos-[a-zA-Z0-9_-]+\/([a-zA-Z0-9_-]+)/i);
       const segment = match ? match[1] : path.split('/').filter(Boolean).pop() || '';
       return segment.split('~')[0].split('.')[0];
     } catch (_) { return ''; }
@@ -114,7 +123,9 @@
   function findMedia(video, index, videos) {
     const keys = [tosKey(video.poster), tosKey(video.currentSrc || video.src)].filter(Boolean);
     for (const key of keys) {
-      const found = resolvedMedia.find(media => [media.poster, media.url].some(value => tosKey(value) === key));
+      const found = resolvedMedia.find(media =>
+        [media.poster, media.url].some(value => tosKey(value) === key)
+      );
       if (found) return found;
     }
     if (videos.length === 1 && resolvedMedia.length === 1) return resolvedMedia[0];
@@ -142,7 +153,10 @@
       button.disabled = true;
       button.textContent = 'Starting download…';
       window.DolaAndroid.download(media.url, media.filename);
-      setTimeout(() => { button.disabled = false; button.textContent = '↓ Download 720P'; }, 1800);
+      setTimeout(() => {
+        button.disabled = false;
+        button.textContent = '↓ Download 720P';
+      }, 1800);
     });
     wrapper.appendChild(button);
     video.insertAdjacentElement('afterend', wrapper);
