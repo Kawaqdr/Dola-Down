@@ -27,5 +27,4 @@ android {
 
 dependencies {
     implementation(project(":virtualapp-engine:lib"))
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
