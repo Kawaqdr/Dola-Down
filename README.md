@@ -1,42 +1,39 @@
-# Dola Down — Android 720P Downloader
+# Dola Down — Full Virtual Sandbox prototype
 
-Android app porting the Dola extension's page-context network capture and video-resolution flow into an embedded Dola WebView.
+Dola Down is being rebuilt as a host application with an embedded VirtualApp guest runtime. The target is to install the user's already-installed Dola app into a separate virtual app space and launch that guest copy from Dola Down.
 
-## Extension techniques ported
+## Virtualization engine
 
-- Document-start JavaScript injection into Dola WebView.
-- Fetch response cloning and streaming-body inspection; XHR response interception.
-- fallback_api extraction with nearby prompt, poster, video ID, and key-seed metadata.
-- API parameters: channel=no, codec_type=8, logo_type=unwatermarked.
-- video_list parsing and explicit 720P rendition selection.
-- SHA-512 key/IV derivation and AES-CBC qAAB token decoding.
-- Video-element association and a Download 720P button below each video.
-- Native Android DownloadManager output to Downloads/Dola_Down/.
+- Engine: [VirtualApp_16](https://github.com/f0restw0w/VirtualApp_16), pinned as a Git submodule at commit `b3c634ad7941765df3da84a207aca94b7861afae`.
+- Engine module: `:virtualapp-engine:lib`.
+- Host package: `com.kawaqdr.doladown`.
+- Guest package: `com.larus.wolf`.
+- Guest install: copies the installed Dola APK set into VirtualApp's private package store; split APKs are imported from their common package directory.
+- Guest launch: uses VirtualCore's virtual package manager and guest activity routing.
+- The original Dola installation is not uninstalled or modified.
 
-## Native Dola app limitation
+## First-run workflow
 
-Android's application sandbox prevents a normal companion app from reading another app's private HTTPS traffic or process memory. Automatic interception therefore runs inside the Dola WebView hosted by Dola Down, not inside the separately installed Dola Android APK.
+1. Install and open Dola Down.
+2. Tap **Install Dola into Sandbox**.
+3. Wait for the virtual package installer to finish.
+4. Tap **Launch Dola in Sandbox**.
+5. Sign in to the guest Dola instance and test video generation.
 
-The app accepts Android Share intents. Shared video files are copied to Downloads; shared text containing an actual captured fallback_api payload can be resolved. A normal conversation URL is not the same as the captured network payload.
+## Important compatibility notes
+
+This is an experimental integration, not a verified production clone. VirtualApp_16 describes itself as unstable and not production-ready. Its published tested configuration is Android 14 on a Xiaomi Redmi / Snapdragon 695; it documents Android-version-specific hidden-API, native hooking, Google Play Services, storage, and signature limitations. The user's Infinix Android 12 device still requires on-device testing.
+
+The Android Virtualization Framework (AVF) is not a drop-in alternative for this use: its VM APIs require privileged/system permissions and are not generally available to ordinary third-party apps.
+
+Dola may depend on Play Integrity, Google sign-in, push notifications, device attestation, or anti-virtualization checks. If so, the guest app may fail to sign in or launch correctly. Dola Down will not bypass those protections.
+
+## Current scope
+
+This phase implements the host runtime startup, import of the installed Dola APK set, and guest launch. It does **not** yet implement reliable capture of Dola's private API traffic from the guest process or automatic 720P downloads. Those require separate guest-runtime integration and compatibility testing.
 
 ## Build
 
-Android Gradle Plugin 8.7.3, Gradle 8.9, Kotlin 2.0.21, JDK 17, Android SDK 35, minimum API 29.
+JDK 17, Gradle 7.5, Android Gradle Plugin 7.4.2, Android SDK 34, NDK 21.4.7075529.
 
-Open in Android Studio or run gradle assembleDebug. APK output: app/build/outputs/apk/debug/app-debug.apk.
-
-## Use
-
-1. Install and open Dola Down.
-2. Sign in to Dola inside the embedded WebView.
-3. Generate a new video after the interceptor has loaded.
-4. Wait for the status to report a resolved 720P rendition.
-5. Tap Download 720P below the video.
-6. The MP4 is saved to Downloads/Dola_Down/.
-
-## Limitations
-
-- A non-720P rendition is never relabeled as 720P.
-- Dola may change its API response schema, token format, or session requirements.
-- The fallback API call uses WebView cookies and can still fail if Dola requires additional signatures or headers.
-- No TLS interception certificate, root access, or private-app memory inspection is used.
+The workflow checks out the pinned VirtualApp submodule and builds the Dola Down debug APK.
