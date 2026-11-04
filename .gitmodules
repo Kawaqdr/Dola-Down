@@ -1,0 +1,3 @@
+[submodule "virtualapp-engine"]
+	path = virtualapp-engine
+	url = https://github.com/f0restw0w/VirtualApp_16.git
