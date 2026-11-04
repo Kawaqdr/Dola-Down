@@ -5,6 +5,7 @@ import android.app.DownloadManager
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
@@ -40,7 +41,7 @@ class MainActivity : Activity() {
         buildLayout()
         configureWebView()
         handleIncomingIntent(intent)
-        if (intent?.action != Intent.ACTION_SEND) webView.loadUrl(DOLA_CHAT_URL)
+        webView.loadUrl(DOLA_CHAT_URL)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -258,7 +259,7 @@ class MainActivity : Activity() {
         val sharedText = incoming.getStringExtra(Intent.EXTRA_TEXT)
         if (!sharedText.isNullOrBlank()) {
             payloadInput.setText(sharedText)
-            statusView.text = "Shared text received. Tap Resolve shared data."
+            statusView.text = "Shared text received. Sign in to Dola, then tap Resolve shared data."
             return
         }
         val sharedUri = if (Build.VERSION.SDK_INT >= 33) {
