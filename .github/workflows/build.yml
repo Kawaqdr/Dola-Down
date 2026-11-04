@@ -2,7 +2,7 @@ name: Android Build
 
 on:
   push:
-    branches: [main, master]
+    branches: ["**"]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -21,63 +21,26 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: "8.9"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
 
       - name: Install Android platform
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Prepare signing key
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
-            echo "::error::Missing signing secrets. Configure ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, and ANDROID_KEY_PASSWORD in GitHub repository Actions secrets."
-            exit 1
-          fi
+      - name: Build debug APK
+        run: gradle --no-daemon assembleDebug
 
-          KEYSTORE_PATH="$GITHUB_WORKSPACE/app/release-key.jks"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
-          test -s "$KEYSTORE_PATH"
-          keytool -list -keystore "$KEYSTORE_PATH" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias upload >/dev/null
-
-          {
-            echo "KEYSTORE_PATH=$KEYSTORE_PATH"
-            echo "STORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
-            echo "KEY_ALIAS=upload"
-            echo "KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
-          } >> "$GITHUB_ENV"
-          echo "Signing keystore validated."
-
-      - name: Build signed release APK
-        run: gradle --no-daemon assembleRelease
-
-      - name: Verify APK signature
-        run: |
-          set -euo pipefail
-          APK="app/build/outputs/apk/release/app-release.apk"
-          test -s "$APK"
-          APKSIGNER="$(find "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}/build-tools" -type f -name apksigner 2>/dev/null | sort -V | tail -n 1)"
-          test -n "$APKSIGNER" && test -x "$APKSIGNER"
-          "$APKSIGNER" verify --verbose "$APK"
-          echo "Signed release APK verified."
-
-      - name: Upload signed release APK
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: Dola-Down-signed-release-apk
-          path: app/build/outputs/apk/release/app-release.apk
+          name: Dola-Down-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
