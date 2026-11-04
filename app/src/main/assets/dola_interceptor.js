@@ -35,7 +35,8 @@
     for (const pattern of patterns) {
       let match;
       while ((match = pattern.exec(text)) !== null) {
-        const fallbackUrl = clean(match[1]);
+        let fallbackUrl = clean(match[1]);
+        try { fallbackUrl = new URL(fallbackUrl, location.href).toString(); } catch (_) {}
         if (!fallbackUrl || seenFallbacks.has(fallbackUrl)) continue;
         seenFallbacks.add(fallbackUrl);
         const metadata = {
@@ -182,7 +183,9 @@
     }
   };
 
-  new MutationObserver(scanVideos).observe(document.documentElement, { childList: true, subtree: true });
+  const observer = new MutationObserver(scanVideos);
+  observer.observe(document.documentElement || document, { childList: true, subtree: true });
+  document.addEventListener('DOMContentLoaded', scanVideos, { once: true });
   scanVideos();
   console.info(TAG, 'Fetch/XHR interceptor installed in Dola WebView.');
 })();
