@@ -1,5 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <queries>
+        <package android:name="com.larus.wolf" />
+    </queries>
     <application
         android:allowBackup="false"
         android:label="Dola Down"
@@ -7,7 +11,6 @@
         android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="true"
             android:launchMode="singleTop">
             <intent-filter>
@@ -25,5 +28,17 @@
                 <data android:mimeType="video/*" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".DolaAccessibilityService"
+            android:label="Dola Down video detection"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/dola_accessibility_service" />
+        </service>
     </application>
 </manifest>
