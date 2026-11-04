@@ -193,7 +193,7 @@ object DolaResolver {
     private fun decodeVideoUrl(token: String, keySeed: String): String? {
         if (token.startsWith("https://") || token.startsWith("http://")) return token
         val decoded = decodeBase64Loose(token) ?: return null
-        val direct = asciiUrl(decoded)
+        val direct = asciiUrl(decoded).orEmpty()
         if (direct.startsWith("https://") || direct.startsWith("http://")) return direct
         return if (token.startsWith("qAAB") && keySeed.isNotBlank()) decodeQaab(token, keySeed) else null
     }
