@@ -11,7 +11,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -42,7 +41,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         // Replace with the OAuth 2.0 Web application client ID for the site's backend.
         private const val GOOGLE_WEB_CLIENT_ID = "YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com"
-        private const val HOME_URL = "https://www.google.com"
+        private const val HOME_URL = "https://dola.com"
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -55,12 +54,10 @@ class MainActivity : ComponentActivity() {
                 val context = LocalContext.current
                 val scope = rememberCoroutineScope()
                 var address by remember { mutableStateOf(HOME_URL) }
-                var pageTitle by remember { mutableStateOf("Dola Down Browser") }
                 var webView by remember { mutableStateOf<WebView?>(null) }
                 var canGoBack by remember { mutableStateOf(false) }
                 var canGoForward by remember { mutableStateOf(false) }
                 var loading by remember { mutableFloatStateOf(0f) }
-                var googleAccount by remember { mutableStateOf<String?>(null) }
 
                 fun navigate(raw: String) {
                     val value = raw.trim()
@@ -94,10 +91,9 @@ class MainActivity : ComponentActivity() {
                             if (credential is CustomCredential &&
                                 credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                                 val google = GoogleIdTokenCredential.createFrom(credential.data)
-                                googleAccount = google.id
                                 Toast.makeText(
                                     context,
-                                    "Google account selected: ${google.id}. The website must exchange this identity with its backend to create a session.",
+                                    "Google account selected: ${google.id}. The website backend must exchange this identity to create a session.",
                                     Toast.LENGTH_LONG
                                 ).show()
                             } else {
@@ -195,7 +191,6 @@ class MainActivity : ComponentActivity() {
                                     override fun onPageFinished(view: WebView, url: String?) {
                                         super.onPageFinished(view, url)
                                         url?.let { address = it }
-                                        pageTitle = view.title ?: "Dola Down Browser"
                                         canGoBack = view.canGoBack()
                                         canGoForward = view.canGoForward()
                                     }
@@ -214,10 +209,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onDestroy() {
-        // WebView is released with its Activity context.
-        super.onDestroy()
     }
 }
