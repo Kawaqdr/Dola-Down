@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import com.lody.virtual.client.core.InstallStrategy
 import com.lody.virtual.client.core.VirtualCore
+import com.lody.virtual.client.ipc.VActivityManager
 import java.io.File
 
 object DolaSandbox {
@@ -25,7 +26,7 @@ object DolaSandbox {
         }
 
         // Play Store apps may be delivered as base + configuration split APKs.
-        // VirtualApp's installer accepts the containing directory for split packages.
+        // VirtualApp's own installer passes the containing directory for split packages.
         val sourcePath = if (!appInfo.splitSourceDirs.isNullOrEmpty()) {
             File(appInfo.sourceDir).parentFile?.absolutePath ?: appInfo.sourceDir
         } else {
@@ -57,8 +58,9 @@ object DolaSandbox {
         }
         val launchIntent: Intent = core.getLaunchIntent(DOLA_PACKAGE, 0)
             ?: error("Dola is installed in the sandbox but has no launchable activity.")
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(launchIntent)
+        // Guest activities must be started through VirtualApp's activity manager,
+        // not Android's ordinary Activity.startActivity().
+        VActivityManager.get().startActivity(launchIntent, 0)
     }
 
     fun isDolaInstalledInSandbox(): Boolean =
